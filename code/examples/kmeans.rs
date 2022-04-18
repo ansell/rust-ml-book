@@ -1,11 +1,16 @@
+use std::ops::Range;
+
 use code::*;
 // ANCHOR: libraries
 // Import the linfa prelude and KMeans algorithm
 use linfa::prelude::*;
 use linfa_clustering::KMeans;
+use linfa_nn::distance::L2Dist;
 // We'll build our dataset on our own using ndarray and rand
-use ndarray::prelude::*;
-use rand::prelude::*;
+use ndarray::{prelude::*, OwnedRepr};
+//use rand::prelude::*;
+//use rand::Rng;
+//use rand::rngs::ThreadRng;
 // Import the plotters crate to create the scatter plot
 use plotters::prelude::*;
 // ANCHOR_END: libraries
@@ -13,11 +18,11 @@ use plotters::prelude::*;
 fn main() {
     // ANCHOR: create_squares
     let square_1: Array2<f32> = create_square([7.0, 5.0], 1.0, 150); // Cluster 1
-    let square_2 = create_square([2.0, 2.0], 2.0, 150); // Cluster 2
-    let square_3 = create_square([3.0, 8.0], 1.0, 150); // Cluster 3
-    let square_4 = create_square([5.0, 5.0], 9.0, 300); // A bunch of noise across them all
+    let square_2: Array2<f32> = create_square([2.0, 2.0], 2.0, 150); // Cluster 2
+    let square_3: Array2<f32> = create_square([3.0, 8.0], 1.0, 150); // Cluster 3
+    let square_4: Array2<f32> = create_square([5.0, 5.0], 9.0, 300); // A bunch of noise across them all
 
-    let data = ndarray::stack(
+    let data: Array2<f32> = ndarray::stack(
         Axis(0),
         &[
             square_1.view(),
@@ -31,9 +36,9 @@ fn main() {
 
     // ANCHOR: create_model
     let dataset = DatasetBase::from(data);
-    let rng = thread_rng(); // Random number generator
+    let rng = rand::thread_rng(); // Random number generator
     let n_clusters = 3;
-    let model = KMeans::params_with_rng(n_clusters, rng)
+    let model:linfa_clustering::KMeans<f32, L2Dist> = KMeans::params_with_rng(n_clusters, rng)
         .max_n_iterations(200)
         .tolerance(1e-5)
         .fit(&dataset)
@@ -50,14 +55,14 @@ fn main() {
     let root = BitMapBackend::new("../src/kmeans.png", (600, 400)).into_drawing_area();
     root.fill(&WHITE).unwrap();
 
-    let x_lim = 0.0..10.0f32;
-    let y_lim = 0.0..10.0f32;
+    let x_lim: Range<f32> = 0.0..10.0f32;
+    let y_lim: Range<f32> = 0.0..10.0f32;
 
     let mut ctx = ChartBuilder::on(&root)
-        .set_label_area_size(LabelAreaPosition::Left, 40) // Put in some margins
-        .set_label_area_size(LabelAreaPosition::Right, 40)
-        .set_label_area_size(LabelAreaPosition::Bottom, 40)
-        .caption("KMeans Demo", ("sans-serif", 25)) // Set a caption and font
+        .set_label_area_size::<i32>(LabelAreaPosition::Left, 40) // Put in some margins
+        .set_label_area_size::<i32>(LabelAreaPosition::Right, 40)
+        .set_label_area_size::<i32>(LabelAreaPosition::Bottom, 40)
+        .caption("KMeans Demo", ("sans-serif", 25i32)) // Set a caption and font
         .build_cartesian_2d(x_lim, y_lim)
         .expect("Couldn't build our ChartBuilder");
     // ANCHOR_END: build_chart_base
@@ -76,7 +81,7 @@ fn main() {
     for i in 0..dataset.records.shape()[0] {
         let coordinates = dataset.records.slice(s![i, 0..2]);
 
-        let point = match dataset.targets[i] {
+        let point: Circle<(f32, f32), i32> = match dataset.targets[i] {
             0 => Circle::new(
                 (coordinates[0], coordinates[1]),
                 3,
