@@ -11,4 +11,4 @@ plotters = "0.3"
 ndarray = "0.13"
 linfa = {git = "https://github.com/rust-ml/linfa", branch = "master"}
 linfa-clustering = { git = "https://github.com/rust-ml/linfa/", branch = "master"}
-rand = "0.7"
+rand = { version = "0.8", features = ["small_rng"] }
